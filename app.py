@@ -86,3 +86,8 @@ Question:
 
 Explain clearly in 3-4 sentences.
 """
+
+response = llm.invoke(prompt)
+
+print("\nFinal Answer:\n")
+print(response.content)
