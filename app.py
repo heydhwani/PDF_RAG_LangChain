@@ -49,3 +49,16 @@ vectorstore = FAISS.from_documents(
 )
 
 print("\nFAISS vector database created.")
+
+# Ask user question
+query = input("\nAsk a question: ")
+
+# Search similar chunks
+results = vectorstore.similarity_search(query, k=3)
+
+print("\nTop Relevant Chunks:\n")
+
+for i, doc in enumerate(results):
+    print(f"Result {i+1}:\n")
+    print(doc.page_content)
+    print("\n-----------------\n")
