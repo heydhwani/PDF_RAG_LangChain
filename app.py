@@ -1,6 +1,7 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 
 
 
@@ -40,3 +41,11 @@ chunk_vectors = embeddings.embed_documents(
 
 print("\nEmbedding dimension:", len(chunk_vectors[0]))
 print("Total embeddings created:", len(chunk_vectors))
+
+# Create FAISS vector database
+vectorstore = FAISS.from_documents(
+    chunks,
+    embeddings
+)
+
+print("\nFAISS vector database created.")
