@@ -1,5 +1,6 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
 
@@ -26,3 +27,16 @@ chunks = text_splitter.split_documents(documents)
 print("Total chunks:", len(chunks))
 print("\nFirst chunk:\n")
 print(chunks[0].page_content)
+
+# Create embedding model
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+# Convert chunks into vectors
+chunk_vectors = embeddings.embed_documents(
+    [chunk.page_content for chunk in chunks]
+)
+
+print("\nEmbedding dimension:", len(chunk_vectors[0]))
+print("Total embeddings created:", len(chunk_vectors))
