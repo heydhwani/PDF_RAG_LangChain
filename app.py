@@ -72,3 +72,17 @@ for i, doc in enumerate(results):
     print(f"Result {i+1}:\n")
     print(doc.page_content)
     print("\n-----------------\n")
+
+context = "\n\n".join([doc.page_content for doc in results])
+
+prompt = f"""
+Answer the question using the provided context.
+
+Context:
+{context}
+
+Question:
+{query}
+
+Explain clearly in 3-4 sentences.
+"""
