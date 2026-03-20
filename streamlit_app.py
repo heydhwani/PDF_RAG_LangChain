@@ -1,95 +1,116 @@
 import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader
+import os
+from dotenv import load_dotenv
+
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
-import os
-from dotenv import load_dotenv
 
-# Load API key
+# =======================
+# 🔑 Load API Key
+# =======================
 load_dotenv()
 gemini_key = os.getenv("GEMINI_API_KEY")
 
-# UI Title
-st.set_page_config(page_title="RAG PDF Chatbot", layout="wide")
-st.title("📄 RAG PDF Chatbot")
-st.write("Ask questions based on the uploaded PDF")
+# =======================
+# 🎨 UI
+# =======================
+st.set_page_config(page_title="PDF Chatbot", layout="wide")
 
-# Sidebar - Example Questions
-st.sidebar.header("💡 Example Questions")
-example_questions = [
-    "What is RAG?",
-    "Explain RAG architecture",
-    "Difference between RAG-Sequence and RAG-Token?",
-    "How does RAG work?",
-    "What is DPR?",
-    "Applications of RAG?"
-]
+st.title("📄 AI PDF Chatbot")
+st.markdown("### 🤖 Ask questions from any PDF")
 
-for q in example_questions:
-    if st.sidebar.button(q):
-        st.session_state.query = q
+st.info("👉 Upload a PDF and ask questions related to its content.")
 
-# Load PDF
-pdf_path = "docs/rag_paper.pdf"
-loader = PyPDFLoader(pdf_path)
-documents = loader.load()
+# =======================
+# 📄 Upload
+# =======================
+uploaded_file = st.file_uploader("📂 Upload your PDF", type="pdf")
 
-# Split text
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,
-    chunk_overlap=100
-)
-chunks = text_splitter.split_documents(documents)
+if uploaded_file:
+    st.success("✅ PDF uploaded successfully!")
 
-# Embeddings
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+    # Save file
+    with open("temp.pdf", "wb") as f:
+        f.write(uploaded_file.read())
 
-# Vector DB
-vectorstore = FAISS.from_documents(chunks, embeddings)
+    # Load PDF
+    loader = PyMuPDFLoader("temp.pdf")
+    documents = loader.load()
 
-# LLM
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash-lite",
-    temperature=0.7,
-    api_key=gemini_key
-)
+    if not documents:
+        st.error("❌ Unable to read PDF")
+        st.stop()
 
-# Input box
-query = st.text_input("🔍 Ask your question:")
+    # Split
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+    chunks = splitter.split_documents(documents)
 
-if query:
-    # Retrieve
-    results = vectorstore.similarity_search(query, k=3)
+    # Embeddings
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+    db = FAISS.from_documents(chunks, embeddings)
 
-    # Show context (optional)
-    with st.expander("📄 Retrieved Context"):
-        for i, doc in enumerate(results):
-            st.write(f"Chunk {i+1}:")
-            st.write(doc.page_content)
-            st.write("---")
+    # LLM
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash-lite",
+        api_key=gemini_key
+    )
 
-    # Create prompt
-    context = "\n\n".join([doc.page_content for doc in results])
+    # =======================
+    # 💡 Example Questions
+    # =======================
+    st.subheader("💡 Try asking:")
+    example_qs = [
+        "What is this document about?",
+        "Summarize this PDF",
+        "Explain the main concept",
+        "List key points",
+        "What are the advantages mentioned?"
+    ]
 
-    prompt = f"""
-    Answer the question using the provided context.
+    cols = st.columns(len(example_qs))
+    for i, q in enumerate(example_qs):
+        if cols[i].button(q):
+            st.session_state.query = q
 
-    Context:
-    {context}
+    # =======================
+    # 🔍 Input
+    # =======================
+    query = st.text_input(
+        "🔍 Ask your question:",
+        value=st.session_state.get("query", "")
+    )
 
-    Question:
-    {query}
+    # =======================
+    # 💬 Answer
+    # =======================
+    if query:
+        with st.spinner("⏳ Thinking..."):
+            docs = db.similarity_search(query, k=3)
+            context = "\n".join([d.page_content for d in docs])
 
-    Answer clearly in 3-4 sentences.
-    """
+            prompt = f"""
+            Answer based on this context:
+            {context}
 
-    # Generate response
-    response = llm.invoke(prompt)
+            Question: {query}
+            """
 
-    # Display
-    st.subheader("💡 Answer")
-    st.write(response.content)
+            response = llm.invoke(prompt)
+
+        st.subheader("💡 Answer")
+        st.write(response.content)
+
+        # Optional: sources
+        with st.expander("📄 See extracted content"):
+            for i, d in enumerate(docs):
+                st.write(f"Chunk {i+1}:")
+                st.write(d.page_content[:300])
+                st.write("---")
+
+else:
+    st.warning("⚠️ Please upload a PDF to start")
