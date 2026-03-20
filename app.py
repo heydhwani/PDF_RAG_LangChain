@@ -8,12 +8,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-api_key = os.getenv("GOOGLE_API_KEY")
+gemini_key = os.getenv("GEMINI_API_KEY")
 
+if not gemini_key:
+    raise ValueError("GEMINI_API_KEY not found in .env file")
+
+# Initialize Gemini LLM
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
-    temperature=0.3
+    model="gemini-2.5-flash-lite",
+    temperature=0.7,
+    api_key=gemini_key
 )
 
 pdf_path = "docs/rag_paper.pdf"
