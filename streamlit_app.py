@@ -105,12 +105,7 @@ if uploaded_file:
         st.subheader("💡 Answer")
         st.write(response.content)
 
-        # Optional: sources
-        with st.expander("📄 See extracted content"):
-            for i, d in enumerate(docs):
-                st.write(f"Chunk {i+1}:")
-                st.write(d.page_content[:300])
-                st.write("---")
+
 
 else:
     st.warning("⚠️ Please upload a PDF to start")
