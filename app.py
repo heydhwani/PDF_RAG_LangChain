@@ -81,7 +81,15 @@ for i, doc in enumerate(results):
 context = "\n\n".join([doc.page_content for doc in results])
 
 prompt = f"""
-Answer the question using the provided context.
+You are an intelligent AI assistant that answers questions strictly based on the given document.
+
+Instructions:
+- Answer ONLY using the provided context
+- Do NOT add any external knowledge
+- Do NOT guess anything
+- If the answer is not present, say: "I could not find this information in the document."
+- Keep the answer clear, concise, and well-structured
+- If the content is from a resume, format the answer in bullet points when appropriate
 
 Context:
 {context}
@@ -89,7 +97,7 @@ Context:
 Question:
 {query}
 
-Explain clearly in 3-4 sentences.
+Answer:
 """
 
 response = llm.invoke(prompt)
