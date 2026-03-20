@@ -91,7 +91,7 @@ if uploaded_file:
     if query:
         with st.spinner("⏳ Thinking..."):
             docs = db.similarity_search(query, k=3)
-            context = "\n".join([d.page_content for d in docs])
+            context = "\n\n".join([doc.page_content.strip() for doc in docs])
 
             prompt = f"""
             Answer based on this context:
