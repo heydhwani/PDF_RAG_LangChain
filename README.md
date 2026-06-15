@@ -153,4 +153,4 @@ python-dotenv
 
 **Dhwani Jain**  
 B.Tech CSE | Ajay Kumar Garg Engineering College  
-[LinkedIn](https://linkedin.com/in/dhwani-jain) • [GitHub](https://github.com/heydhwani)
+[LinkedIn](https://www.linkedin.com/in/dhwani-jain-67508327a/) • [GitHub](https://github.com/heydhwani)
