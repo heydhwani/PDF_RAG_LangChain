@@ -8,29 +8,28 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# =======================
-# 🔑 Load API Key
-# =======================
+#Load API Key
+
 load_dotenv()
 gemini_key = os.getenv("GEMINI_API_KEY")
 
-# =======================
-# 🎨 UI
-# =======================
+
+# UI
+
 st.set_page_config(page_title="PDF Chatbot", layout="wide")
 
-st.title("📄 AI PDF Chatbot")
-st.markdown("### 🤖 Ask questions from any PDF")
+st.title(" AI PDF Chatbot")
+st.markdown("### Ask questions from any PDF")
 
-st.info("👉 Upload a PDF and ask questions related to its content.")
+st.info(" Upload a PDF and ask questions related to its content.")
 
-# =======================
-# 📄 Upload
-# =======================
-uploaded_file = st.file_uploader("📂 Upload your PDF", type="pdf")
+
+# Upload
+
+uploaded_file = st.file_uploader(" Upload your PDF", type="pdf")
 
 if uploaded_file:
-    st.success("✅ PDF uploaded successfully!")
+    st.success(" PDF uploaded successfully!")
 
     # Save file
     with open("temp.pdf", "wb") as f:
@@ -61,9 +60,9 @@ if uploaded_file:
     )
 
     # =======================
-    # 💡 Example Questions
+    # Example Questions
     # =======================
-    st.subheader("💡 Try asking:")
+    st.subheader(" Try asking:")
     example_qs = [
         "What is this document about?",
         "Summarize this PDF",
@@ -78,7 +77,7 @@ if uploaded_file:
             st.session_state.query = q
 
     # =======================
-    # 🔍 Input
+    # Input
     # =======================
     query = st.text_input(
         "🔍 Ask your question:",
@@ -86,10 +85,10 @@ if uploaded_file:
     )
 
     # =======================
-    # 💬 Answer
+    # Answer
     # =======================
     if query:
-        with st.spinner("⏳ Thinking..."):
+        with st.spinner(" Thinking..."):
             docs = db.similarity_search(query, k=3)
             context = "\n\n".join([doc.page_content.strip() for doc in docs])
 
@@ -102,10 +101,10 @@ if uploaded_file:
 
             response = llm.invoke(prompt)
 
-        st.subheader("💡 Answer")
+        st.subheader(" Answer")
         st.write(response.content)
 
 
 
 else:
-    st.warning("⚠️ Please upload a PDF to start")
+    st.warning(" Please upload a PDF to start")
