@@ -1,26 +1,28 @@
 def get_prompt(context, question):
-    """
-    Creates the prompt for the Gemini model.
-    """
 
-    prompt = f"""
-You are an intelligent AI assistant.
+    return f"""
+You are an AI assistant that answers ONLY from the provided document.
 
-Answer the user's question ONLY using the provided context.
+The document content is below.
 
-If the answer is not available in the context, reply exactly:
+================ DOCUMENT ================
 
-"I could not find this information in the document."
-
--------------------------
-Context:
 {context}
 
--------------------------
-Question:
+==========================================
+
+User Question:
 {question}
+
+Instructions:
+
+- If the user asks to summarize the document, provide a concise summary of the document.
+- If the user asks for key points, list the important points.
+- If the user asks for an explanation, explain using ONLY the document.
+- If the answer is not present anywhere in the document, reply exactly:
+"I could not find this information in the document."
+
+Do not use outside knowledge.
 
 Answer:
 """
-
-    return prompt

@@ -1,110 +1,168 @@
-import streamlit as st
 import os
-from dotenv import load_dotenv
+import streamlit as st
 
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI
-
-#Load API Key
-
-load_dotenv()
-gemini_key = os.getenv("GEMINI_API_KEY")
+from utils import load_pdf, create_chunks
+from vector_store import create_vector_store
+from llm import load_gemini, load_groq
+from prompts import get_prompt
 
 
-# UI
+# -------------------- Configuration --------------------
 
-st.set_page_config(page_title="PDF Chatbot", layout="wide")
+st.set_page_config(
+    page_title="AI PDF Chatbot",
+    layout="wide"
+)
 
-st.title(" AI PDF Chatbot")
-st.markdown("### Ask questions from any PDF")
-
-st.info(" Upload a PDF and ask questions related to its content.")
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-# Upload
+# -------------------- UI --------------------
 
-uploaded_file = st.file_uploader(" Upload your PDF", type="pdf")
+st.title("📄 AI PDF Chatbot")
+st.markdown("### Ask Questions from Any PDF")
+
+st.info("Upload a PDF and ask questions related to its content.")
+
+uploaded_file = st.file_uploader(
+    "Upload your PDF",
+    type=["pdf"]
+)
+
+
+# -------------------- Main --------------------
 
 if uploaded_file:
-    st.success(" PDF uploaded successfully!")
 
-    # Save file
-    with open("temp.pdf", "wb") as f:
+    st.success("✅ PDF uploaded successfully!")
+
+    pdf_path = os.path.join(
+        UPLOAD_FOLDER,
+        uploaded_file.name
+    )
+
+    with open(pdf_path, "wb") as f:
         f.write(uploaded_file.read())
 
-    # Load PDF
-    loader = PyMuPDFLoader("temp.pdf")
-    documents = loader.load()
+    try:
 
-    if not documents:
-        st.error("❌ Unable to read PDF")
-        st.stop()
+        # Load PDF
+        documents = load_pdf(pdf_path)
 
-    # Split
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
-    chunks = splitter.split_documents(documents)
+        if not documents:
+            st.error("Unable to read PDF.")
+            st.stop()
 
-    # Embeddings
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-    db = FAISS.from_documents(chunks, embeddings)
+        # Create chunks
+        chunks = create_chunks(documents)
 
-    # LLM
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
-        api_key=gemini_key
-    )
+        # Build Vector Store
+        db = create_vector_store(chunks)
 
-    # =======================
-    # Example Questions
-    # =======================
-    st.subheader(" Try asking:")
-    example_qs = [
-        "What is this document about?",
-        "Summarize this PDF",
-        "Explain the main concept",
-        "List key points",
-        "What are the advantages mentioned?"
-    ]
+        # Load LLMs
+        gemini = load_gemini()
+        groq = load_groq()
 
-    cols = st.columns(len(example_qs))
-    for i, q in enumerate(example_qs):
-        if cols[i].button(q):
-            st.session_state.query = q
+        # ---------------- Example Questions ----------------
 
-    # =======================
-    # Input
-    # =======================
-    query = st.text_input(
-        "🔍 Ask your question:",
-        value=st.session_state.get("query", "")
-    )
+        st.subheader("💡 Try Asking")
 
-    # =======================
-    # Answer
-    # =======================
-    if query:
-        with st.spinner(" Thinking..."):
-            docs = db.similarity_search(query, k=3)
-            context = "\n\n".join([doc.page_content.strip() for doc in docs])
+        example_questions = [
+            "What is this document about?",
+            "Summarize this PDF",
+            "Explain the main concept",
+            "List key points",
+            "What are the advantages mentioned?"
+        ]
 
-            prompt = f"""
-            Answer based on this context:
-            {context}
+        cols = st.columns(len(example_questions))
 
-            Question: {query}
-            """
+        for i, question in enumerate(example_questions):
+            if cols[i].button(question):
+                st.session_state["query"] = question
 
-            response = llm.invoke(prompt)
+        # ---------------- User Query ----------------
 
-        st.subheader(" Answer")
-        st.write(response.content)
+        query = st.text_input(
+            "Ask your question",
+            value=st.session_state.get("query", "")
+        )
 
+        if query:
 
+            with st.spinner("Searching relevant content and generating response..."):
+
+                # ---------------- Summarization ----------------
+
+                if any(
+                    word in query.lower()
+                    for word in ["summarize", "summary", "overview"]
+                ):
+
+                    context = "\n\n".join(
+                        doc.page_content
+                        for doc in documents
+                    )
+
+                # ---------------- RAG ----------------
+
+                else:
+
+                    docs = db.similarity_search(
+                        query=query,
+                        k=5
+                    )
+
+                    if not docs:
+                        st.warning("No relevant information found.")
+                        st.stop()
+
+                    context = "\n\n".join(
+                        doc.page_content.strip()
+                        for doc in docs
+                    )
+
+                # ---------------- Prompt ----------------
+
+                prompt = get_prompt(
+                    context=context,
+                    question=query
+                )
+
+                # ---------------- LLM ----------------
+
+                try:
+
+                    if gemini is not None:
+                        response = gemini.invoke(prompt)
+                    else:
+                        raise Exception("Gemini unavailable")
+
+                except Exception as e:
+
+                    if (
+                        "RESOURCE_EXHAUSTED" in str(e)
+                        or "429" in str(e)
+                        or "quota" in str(e).lower()
+                    ):
+
+                        if groq is None:
+                            st.error(
+                                "AI service is temporarily unavailable."
+                            )
+                            st.stop()
+
+                        response = groq.invoke(prompt)
+
+                    else:
+                        raise e
+
+            st.markdown("## 🤖 AI Assistant")
+            st.write(response.content)
+
+    except Exception as e:
+        st.error(f"❌ {e}")
 
 else:
-    st.warning(" Please upload a PDF to start")
+    st.warning("Please upload a PDF to start.")
