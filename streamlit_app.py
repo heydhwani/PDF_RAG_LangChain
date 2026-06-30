@@ -7,7 +7,7 @@ from llm import load_gemini, load_groq
 from prompts import get_prompt
 
 
-# -------------------- Configuration --------------------
+#Configuration
 
 st.set_page_config(
     page_title="AI PDF Chatbot",
@@ -18,7 +18,7 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-# -------------------- UI --------------------
+# UI
 
 st.title("📄 AI PDF Chatbot")
 st.markdown("### Ask Questions from Any PDF")
@@ -31,7 +31,7 @@ uploaded_file = st.file_uploader(
 )
 
 
-# -------------------- Main --------------------
+
 
 if uploaded_file:
 
@@ -64,7 +64,7 @@ if uploaded_file:
         gemini = load_gemini()
         groq = load_groq()
 
-        # ---------------- Example Questions ----------------
+        # Example Questions
 
         st.subheader("💡 Try Asking")
 
@@ -82,7 +82,7 @@ if uploaded_file:
             if cols[i].button(question):
                 st.session_state["query"] = question
 
-        # ---------------- User Query ----------------
+        # User Query
 
         query = st.text_input(
             "Ask your question",
@@ -93,7 +93,7 @@ if uploaded_file:
 
             with st.spinner("Searching relevant content and generating response..."):
 
-                # ---------------- Summarization ----------------
+                # Summarization
 
                 if any(
                     word in query.lower()
@@ -105,7 +105,7 @@ if uploaded_file:
                         for doc in documents
                     )
 
-                # ---------------- RAG ----------------
+                # RAG
 
                 else:
 
@@ -123,14 +123,14 @@ if uploaded_file:
                         for doc in docs
                     )
 
-                # ---------------- Prompt ----------------
+                # Prompt
 
                 prompt = get_prompt(
                     context=context,
                     question=query
                 )
 
-                # ---------------- LLM ----------------
+                # LLM
 
                 try:
 

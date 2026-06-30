@@ -1,159 +1,123 @@
-# 📄 AI PDF Chatbot — RAG Pipeline with LangChain & Gemini
+# 📄 AI PDF Chatbot using RAG, LangChain, Gemini & Groq
 
-
-A Retrieval-Augmented Generation (RAG) system that lets you upload any PDF and ask natural language questions. The system retrieves the most relevant chunks from the document and generates accurate, context-grounded answers using Google's Gemini LLM — without hallucinating outside the document.
-*Test App here*
-https://pdfraglangchaingit-3zkimyfvyxqtgvvdbhjlmx.streamlit.app/
-
+An AI-powered PDF Question Answering application built using **Retrieval-Augmented Generation (RAG)**. Upload any PDF and ask natural language questions about its content. The application retrieves the most relevant document chunks using **FAISS** and generates context-aware responses using **Google Gemini**, with **Groq** as an automatic fallback when Gemini is unavailable or its quota is exhausted.
 
 ---
 
+## 🚀 Live Demo
 
-## 🧠 How It Works
+🔗 **Live App:** *https://pdfraglangchaingit-3zkimyfvyxqtgvvdbhjlmx.streamlit.app/*
 
-```
-PDF File
-   ↓
-PyPDFLoader (extract text)
-   ↓
-RecursiveCharacterTextSplitter (chunk: 500 tokens, overlap: 100)
-   ↓
-HuggingFace Embeddings — sentence-transformers/all-MiniLM-L6-v2
-   ↓
-FAISS Vector Store (similarity search)
-   ↓
-Top-3 relevant chunks retrieved
-   ↓
-Custom Prompt + Gemini 2.0 Flash Lite (LLM)
-   ↓
-Context-grounded Answer
-```
+---
+
+## 📌 Features
+
+- 📄 Upload any PDF document
+- ✂️ Automatic document chunking
+- 🔍 Semantic similarity search using FAISS
+- 🤖 AI-powered question answering
+- 📝 Full document summarization
+- ⚡ Google Gemini as the primary LLM
+- 🔁 Automatic Groq fallback
+- 💡 Example question buttons
+- 🎯 Context-grounded responses to reduce hallucinations
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Tool Used |
-|---|---|
-| PDF Loader | `PyPDFLoader` (LangChain) |
-| Text Splitting | `RecursiveCharacterTextSplitter` |
-| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` (HuggingFace) |
-| Vector Store | `FAISS` |
-| LLM | `Gemini 2.0 Flash Lite` (Google Generative AI) |
-| Framework | `LangChain` |
-| Env Management | `python-dotenv` |
+| Category | Technologies |
+|----------|--------------|
+| Frontend | Streamlit |
+| Framework | LangChain |
+| LLMs | Google Gemini, Groq |
+| Embeddings | sentence-transformers/all-MiniLM-L6-v2 |
+| Vector Database | FAISS |
+| PDF Processing | PyMuPDF |
+| Language | Python |
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
-```
-PDF_RAG_LangChain/
+```text
+PDF_RAG_LANGCHAIN/
 │
 ├── docs/
-│   └── rag_paper.pdf        # Sample PDF for testing
+│   └── rag_paper.pdf
 │
-├── app.py                   # Main RAG pipeline
-├── requirements.txt         # Dependencies
-├── .env                     # API keys (not committed)
-├── .gitignore
-└── README.md
+├── uploads/
+├── vector_store/
+│
+├── streamlit_app.py
+├── utils.py
+├── vector_store.py
+├── llm.py
+├── prompts.py
+├── config.py
+├── requirements.txt
+├── README.md
+└── .env
 ```
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Installation
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/heydhwani/PDF_RAG_LangChain.git
-cd PDF_RAG_LangChain
-```
+### 1. Install Dependencies
 
-### 2. Create Virtual Environment
-```bash
-python -m venv venv
-source venv/bin/activate      # Mac/Linux
-venv\Scripts\activate         # Windows
-```
-
-### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Set Up API Key
-Create a `.env` file in the root directory:
-```
-GEMINI_API_KEY=your_google_gemini_api_key_here
-```
-Get your free Gemini API key from: https://aistudio.google.com/
+### 3. Configure Environment Variables
 
-### 5. Add Your PDF
-Place your PDF inside the `docs/` folder and update the path in `app.py`:
-```python
-pdf_path = "docs/your_file.pdf"
-```
+Create a `.env` file in the project root.
 
-### 6. Run the App
+
+### 4. Run the Application
+
 ```bash
-python app.py
+streamlit run streamlit_app.py
 ```
 
 ---
 
-## 💡 Key Features
+## 🔄 RAG Workflow
 
-- **Strict document grounding** — LLM answers ONLY from the PDF, no hallucination
-- **Semantic search** — FAISS finds the most relevant chunks using vector similarity
-- **HuggingFace embeddings** — No paid embedding API needed
-- **Custom prompt engineering** — Structured prompt ensures precise, formatted answers
-- **Resume-aware output** — Formats answers in bullet points when document is a resume
-
----
-
-## 📌 Example
-
-```
-Ask a question: What methodology does the paper use?
-
-Final Answer:
-The paper proposes a RAG (Retrieval-Augmented Generation) approach that combines:
-- A dense retriever for fetching relevant document passages
-- A sequence-to-sequence model for generating the final answer
-- Non-parametric memory via a document index
-```
+1. Upload a PDF document.
+2. Extract text using **PyMuPDF**.
+3. Split the document into overlapping chunks.
+4. Generate embeddings using **HuggingFace Sentence Transformers**.
+5. Store embeddings in **FAISS**.
+6. Retrieve the most relevant chunks for the user query.
+7. Create a context-aware prompt.
+8. Generate a response using **Google Gemini**.
+9. Automatically switch to **Groq** if Gemini is unavailable.
 
 ---
 
-## 📦 Requirements
+## 💬 Example Questions
 
-```
-langchain
-langchain-community
-langchain-text-splitters
-langchain-huggingface
-langchain-google-genai
-faiss-cpu
-pypdf
-sentence-transformers
-python-dotenv
-```
+- What is this document about?
+- Summarize this PDF
+- Explain the main concept
+- List key points
+- What are the advantages mentioned?
 
 ---
 
 ## 🔮 Future Improvements
 
-- [ ] Add Streamlit UI for browser-based interaction
-- [ ] Support multiple PDF uploads
-- [ ] Add chat history / multi-turn conversation
-- [ ] Swap FAISS with ChromaDB for persistent storage
-- [ ] Deploy on Hugging Face Spaces
+- Multi-PDF support
+- Chat history
+- Source citations for answers
+- Hybrid Search (BM25 + Vector Search)
+- Streaming responses
+- Conversation memory
 
 ---
 
 ## 👩‍💻 Author
 
-**Dhwani Jain**  
-B.Tech CSE | Ajay Kumar Garg Engineering College  
-[LinkedIn](https://www.linkedin.com/in/dhwani-jain-67508327a/) • [GitHub](https://github.com/heydhwani)
+**Dhwani Jain**
